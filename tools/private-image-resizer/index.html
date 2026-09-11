@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#00333F" />
+  <meta name="description" content="A private, offline image resizer that runs entirely in your browser." />
+  <title>Private Image Resizer</title>
+  <script>
+    document.documentElement.dataset.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --brand-teal: #00333F;
+      --brand-teal-secondary: #0F505E;
+      --brand-cream: #F6E5DE;
+      --brand-coral: #E3371B;
+      --brand-lavender: #D09DC3;
+      --brand-charcoal: #121313;
+      --bg: #F5F7F7;
+      --panel: #FFFFFF;
+      --panel-soft: #EEF2F2;
+      --text: var(--brand-charcoal);
+      --muted: #59686B;
+      --border: #D5DEDF;
+      --accent: var(--brand-teal);
+      --accent-hover: var(--brand-teal-secondary);
+      --accent-contrast: #FFFFFF;
+      --accent-soft: #E4ECEE;
+      --success: var(--brand-teal-secondary);
+      --warning: var(--brand-coral);
+      --focus: var(--brand-lavender);
+      --privacy-bg: var(--brand-cream);
+      --shadow: 0 14px 38px rgba(18, 19, 19, 0.09);
+      --radius: 20px;
+    }
+
+    :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: var(--brand-charcoal);
+        --panel: #1B1D1D;
+        --panel-soft: #242727;
+        --text: #F7F7F5;
+        --muted: #B4BDBF;
+        --border: #394244;
+        --accent: var(--brand-teal-secondary);
+        --accent-hover: #176679;
+        --accent-contrast: #FFFFFF;
+        --accent-soft: #20363A;
+        --success: #7DB5C0;
+        --warning: #FF735E;
+        --focus: var(--brand-lavender);
+        --privacy-bg: #2A2528;
+        --shadow: 0 14px 38px rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    button, input, select { font: inherit; }
+
+    button, label[for="fileInput"] { -webkit-tap-highlight-color: transparent; }
+
+    .app {
+      width: min(100%, 980px);
+      margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top)) 16px max(36px, env(safe-area-inset-bottom));
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 6vw, 2.75rem);
+      line-height: 1.05;
+      margin: 0 0 8px;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      max-width: 62ch;
+    }
+
+    .privacy-badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--accent);
+      background: var(--privacy-bg);
+      color: var(--success);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(290px, 0.85fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .drop-zone {
+      min-height: 430px;
+      padding: 18px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      background: var(--panel-soft);
+      transition: border-color .2s ease, transform .2s ease, background .2s ease;
+    }
+
+    .drop-zone.dragover {
+      background: var(--accent-soft);
+      outline: 3px dashed var(--accent);
+      outline-offset: -12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      max-width: 420px;
+    }
+
+    .empty-icon {
+      width: 78px;
+      height: 78px;
+      margin: 0 auto 16px;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 2rem;
+    }
+
+    .empty-state h2 {
+      margin: 0 0 8px;
+      font-size: 1.35rem;
+    }
+
+    .empty-state p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .button,
+    label.button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 750;
+      transition: transform .15s ease, background .15s ease, opacity .15s ease;
+      user-select: none;
+    }
+
+    .button:active,
+    label.button:active { transform: scale(.98); }
+
+    .button.primary,
+    label.button.primary {
+      background: var(--accent);
+      color: var(--accent-contrast);
+    }
+
+    .button.primary:hover,
+    label.button.primary:hover { background: var(--accent-hover); }
+
+    .button.secondary {
+      background: var(--panel-soft);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .button.secondary:hover,
+    .button.ghost:hover,
+    .preset:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .button.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+      transform: none;
+    }
+
+    input[type="file"] { display: none; }
+
+    .preview-wrap {
+      width: 100%;
+      height: 100%;
+      display: none;
+      grid-template-rows: 1fr auto;
+      gap: 12px;
+    }
+
+    .preview-wrap.active { display: grid; }
+
+    .preview-stage {
+      min-height: 350px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+
+    #previewImage {
+      display: block;
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .file-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .file-meta strong {
+      color: var(--text);
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 42ch;
+    }
+
+    .controls { padding: 20px; }
+
+    .controls h2 {
+      margin: 0 0 18px;
+      font-size: 1.25rem;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field label,
+    .group-label {
+      display: block;
+      font-size: .9rem;
+      font-weight: 750;
+      margin-bottom: 7px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .input-row .times {
+      color: var(--muted);
+      font-size: 1.15rem;
+    }
+
+    input[type="number"],
+    select,
+    input[type="range"] {
+      width: 100%;
+    }
+
+    input[type="number"],
+    select {
+      min-height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      color: var(--text);
+      padding: 10px 12px;
+      outline: none;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--focus);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .toggle-copy { min-width: 0; }
+
+    .toggle-copy strong { display: block; font-size: .92rem; }
+    .toggle-copy span { display: block; font-size: .8rem; color: var(--muted); }
+
+    .switch { position: relative; width: 50px; height: 30px; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 999px;
+      transition: .2s;
+      cursor: pointer;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 4px;
+      top: 4px;
+      border-radius: 50%;
+      background: var(--accent-contrast);
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+      transition: .2s;
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
+
+    .quality-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 5px;
+    }
+
+    output { color: var(--muted); font-size: .86rem; }
+
+    input[type="range"] { accent-color: var(--accent); }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .preset {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      color: var(--text);
+      padding: 10px 8px;
+      cursor: pointer;
+      font-size: .84rem;
+      font-weight: 700;
+    }
+
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 1.5em;
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    .status.success { color: var(--success); }
+    .status.warning { color: var(--warning); }
+
+    .privacy-note {
+      margin-top: 16px;
+      border-radius: 14px;
+      padding: 13px 14px;
+      background: var(--privacy-bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .84rem;
+    }
+
+    .privacy-note strong { color: var(--success); }
+
+    .hidden-canvas { display: none; }
+
+    .header-actions { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 10px; }
+    #themeToggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+    #themeToggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+    @media (max-width: 760px) {
+      header { display: block; }
+      .header-actions { flex-direction: row; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .drop-zone { min-height: 360px; }
+      .preview-stage { min-height: 300px; }
+      .controls { padding: 18px; }
+    }
+
+    @media (max-width: 430px) {
+      .app { padding-left: 10px; padding-right: 10px; }
+      .preset-grid { grid-template-columns: repeat(2, 1fr); }
+      .file-meta { align-items: flex-start; flex-direction: column; }
+      .file-meta strong { max-width: 84vw; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Private Image Resizer</h1>
+        <p class="subtitle">Resize and compress photos directly on your phone or computer. Your image never leaves this device.</p>
+      </div>
+      <div class="header-actions">
+        <div class="privacy-badge">100% local processing</div>
+        <button class="button secondary" id="themeToggle" type="button" aria-pressed="false">Dark theme</button>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Image resizer">
+      <article class="card drop-zone" id="dropZone">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon" aria-hidden="true">↗</div>
+          <h2>Choose an image</h2>
+          <p>Select a photo from your phone, camera, or files. You can also drag and drop an image here.</p>
+          <label class="button primary" for="fileInput">Choose image</label>
+          <input id="fileInput" type="file" accept="image/*" />
+        </div>
+
+        <div class="preview-wrap" id="previewWrap">
+          <div class="preview-stage">
+            <img id="previewImage" alt="Selected image preview" />
+          </div>
+          <div class="file-meta">
+            <div>
+              <strong id="fileName">image.jpg</strong>
+              <span id="fileDetails">0 × 0 · 0 KB</span>
+            </div>
+            <button class="button ghost" id="replaceButton" type="button">Replace</button>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card controls">
+        <h2>Resize settings</h2>
+
+        <div class="field">
+          <span class="group-label">Quick presets</span>
+          <div class="preset-grid">
+            <button class="preset" data-max="480" type="button">480 px</button>
+            <button class="preset" data-max="720" type="button">720 px</button>
+            <button class="preset" data-max="1080" type="button">1080 px</button>
+            <button class="preset" data-max="1600" type="button">1600 px</button>
+            <button class="preset" data-max="2048" type="button">2048 px</button>
+            <button class="preset" data-original="true" type="button">Original</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="widthInput">Dimensions in pixels</label>
+          <div class="input-row">
+            <input id="widthInput" type="number" inputmode="numeric" min="1" max="20000" placeholder="Width" disabled />
+            <span class="times" aria-hidden="true">×</span>
+            <input id="heightInput" type="number" inputmode="numeric" min="1" max="20000" placeholder="Height" disabled />
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-copy">
+            <strong>Keep aspect ratio</strong>
+            <span>Prevents the image from stretching</span>
+          </div>
+          <label class="switch">
+            <input id="aspectToggle" type="checkbox" checked disabled />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="field">
+          <label for="formatSelect">Output format</label>
+          <select id="formatSelect" disabled>
+            <option value="image/jpeg">JPG, smaller photos</option>
+            <option value="image/webp">WebP, best compression</option>
+            <option value="image/png">PNG, transparency</option>
+          </select>
+        </div>
+
+        <div class="field" id="qualityField">
+          <div class="quality-line">
+            <label for="qualityInput">Quality</label>
+            <output id="qualityOutput">85%</output>
+          </div>
+          <input id="qualityInput" type="range" min="10" max="100" value="85" disabled />
+        </div>
+
+        <div class="actions">
+          <button class="button primary" id="downloadButton" type="button" disabled>Resize and download</button>
+          <button class="button secondary" id="resetButton" type="button" disabled>Reset</button>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+
+        <div class="privacy-note">
+          <strong>Private by design.</strong> No upload, account, analytics, cookies, or server connection is used. Close the page and the selected image is gone.
+        </div>
+      </aside>
+    </section>
+
+<canvas id="canvas" class="hidden-canvas"></canvas>
+  </main>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+
+      const fileInput = $('fileInput');
+      const dropZone = $('dropZone');
+      const emptyState = $('emptyState');
+      const previewWrap = $('previewWrap');
+      const previewImage = $('previewImage');
+      const fileName = $('fileName');
+      const fileDetails = $('fileDetails');
+      const replaceButton = $('replaceButton');
+      const widthInput = $('widthInput');
+      const heightInput = $('heightInput');
+      const aspectToggle = $('aspectToggle');
+      const formatSelect = $('formatSelect');
+      const qualityInput = $('qualityInput');
+      const qualityOutput = $('qualityOutput');
+      const qualityField = $('qualityField');
+      const downloadButton = $('downloadButton');
+      const resetButton = $('resetButton');
+      const status = $('status');
+      const canvas = $('canvas');
+      const ctx = canvas.getContext('2d', { alpha: true });
+
+      const themePreference = window.matchMedia('(prefers-color-scheme: dark)');
+      const themeToggle = document.getElementById('themeToggle');
+      let themeOverridden = false;
+      function applyTheme(dark) {
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        themeToggle.setAttribute('aria-pressed', String(dark));
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#121313' : '#F5F7F7';
+      }
+      applyTheme(themePreference.matches);
+      themeToggle.addEventListener('click', () => {
+        themeOverridden = true;
+        applyTheme(document.documentElement.dataset.theme !== 'dark');
+      });
+      themePreference.addEventListener('change', (event) => {
+        if (!themeOverridden) applyTheme(event.matches);
+      });
+      let sourceFile = null;
+      let sourceImage = null;
+      let originalWidth = 0;
+      let originalHeight = 0;
+      let objectUrl = null;
+      let isSyncingDimensions = false;
+
+      const controls = [widthInput, heightInput, aspectToggle, formatSelect, qualityInput, downloadButton, resetButton];
+
+      function setControlsEnabled(enabled) {
+        controls.forEach((control) => control.disabled = !enabled);
+      }
+
+      function setStatus(message = '', kind = '') {
+        status.textContent = message;
+        status.className = `status${kind ? ` ${kind}` : ''}`;
+      }
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        const value = bytes / Math.pow(1024, index);
+        return `${value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`;
+      }
+
+      function cleanupObjectUrl() {
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          objectUrl = null;
+        }
+      }
+
+      async function loadFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          setStatus('Please choose a valid image file.', 'warning');
+          return;
+        }
+
+        setStatus('Loading image…');
+        cleanupObjectUrl();
+        objectUrl = URL.createObjectURL(file);
+
+        const image = new Image();
+        image.decoding = 'async';
+        image.onload = () => {
+          sourceFile = file;
+          sourceImage = image;
+          originalWidth = image.naturalWidth;
+          originalHeight = image.naturalHeight;
+
+          widthInput.value = originalWidth;
+          heightInput.value = originalHeight;
+          fileName.textContent = file.name || 'image';
+          fileDetails.textContent = `${originalWidth} × ${originalHeight} · ${formatBytes(file.size)}`;
+          previewImage.src = objectUrl;
+
+          emptyState.style.display = 'none';
+          previewWrap.classList.add('active');
+          setControlsEnabled(true);
+
+          if (file.type === 'image/png') formatSelect.value = 'image/png';
+          else if (file.type === 'image/webp') formatSelect.value = 'image/webp';
+          else formatSelect.value = 'image/jpeg';
+
+          updateQualityVisibility();
+          setStatus('Ready to resize.', 'success');
+        };
+        image.onerror = () => {
+          cleanupObjectUrl();
+          setStatus('This image could not be opened in your browser.', 'warning');
+        };
+        image.src = objectUrl;
+      }
+
+      function updateQualityVisibility() {
+        const hasQuality = formatSelect.value !== 'image/png';
+        qualityField.style.opacity = hasQuality ? '1' : '.5';
+        qualityInput.disabled = !sourceImage || !hasQuality;
+      }
+
+      function syncFromWidth() {
+        if (isSyncingDimensions || !aspectToggle.checked || !originalWidth) return;
+        const width = Number(widthInput.value);
+        if (!width) return;
+        isSyncingDimensions = true;
+        heightInput.value = Math.max(1, Math.round(width * originalHeight / originalWidth));
+        isSyncingDimensions = false;
+      }
+
+      function syncFromHeight() {
+        if (isSyncingDimensions || !aspectToggle.checked || !originalHeight) return;
+        const height = Number(heightInput.value);
+        if (!height) return;
+        isSyncingDimensions = true;
+        widthInput.value = Math.max(1, Math.round(height * originalWidth / originalHeight));
+        isSyncingDimensions = false;
+      }
+
+      function applyMaxDimension(maxDimension) {
+        if (!sourceImage) return;
+        if (originalWidth <= maxDimension && originalHeight <= maxDimension) {
+          widthInput.value = originalWidth;
+          heightInput.value = originalHeight;
+          setStatus('The image is already smaller than this preset.', 'success');
+          return;
+        }
+        const scale = Math.min(maxDimension / originalWidth, maxDimension / originalHeight);
+        widthInput.value = Math.max(1, Math.round(originalWidth * scale));
+        heightInput.value = Math.max(1, Math.round(originalHeight * scale));
+        setStatus(`Set longest side to ${maxDimension} px.`, 'success');
+      }
+
+      function outputExtension(mime) {
+        if (mime === 'image/png') return 'png';
+        if (mime === 'image/webp') return 'webp';
+        return 'jpg';
+      }
+
+      function outputName(file, mime, width, height) {
+        const base = (file?.name || 'image').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-');
+        return `${base}-${width}x${height}.${outputExtension(mime)}`;
+      }
+
+      function downloadBlob(blob, name) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      async function resizeAndDownload() {
+        if (!sourceImage || !sourceFile) return;
+
+        const width = Math.round(Number(widthInput.value));
+        const height = Math.round(Number(heightInput.value));
+        const mime = formatSelect.value;
+        const quality = Number(qualityInput.value) / 100;
+
+        if (!width || !height || width < 1 || height < 1 || width > 20000 || height > 20000) {
+          setStatus('Enter dimensions between 1 and 20,000 pixels.', 'warning');
+          return;
+        }
+
+        const estimatedPixels = width * height;
+        if (estimatedPixels > 100_000_000) {
+          setStatus('That image is too large for many mobile browsers. Choose smaller dimensions.', 'warning');
+          return;
+        }
+
+        downloadButton.disabled = true;
+        downloadButton.textContent = 'Processing…';
+        setStatus('Resizing locally on this device…');
+
+        try {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.clearRect(0, 0, width, height);
+
+          if (mime === 'image/jpeg') {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+          }
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(sourceImage, 0, 0, width, height);
+
+          const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob((result) => result ? resolve(result) : reject(new Error('Conversion failed')), mime, mime === 'image/png' ? undefined : quality);
+          });
+
+          downloadBlob(blob, outputName(sourceFile, mime, width, height));
+          setStatus(`Downloaded ${width} × ${height} · ${formatBytes(blob.size)}.`, 'success');
+        } catch (error) {
+          console.error(error);
+          setStatus('The browser could not resize this image. Try smaller dimensions or another format.', 'warning');
+        } finally {
+          downloadButton.disabled = false;
+          downloadButton.textContent = 'Resize and download';
+        }
+      }
+
+      function resetAll() {
+        sourceFile = null;
+        sourceImage = null;
+        originalWidth = 0;
+        originalHeight = 0;
+        fileInput.value = '';
+        previewImage.removeAttribute('src');
+        previewWrap.classList.remove('active');
+        emptyState.style.display = '';
+        widthInput.value = '';
+        heightInput.value = '';
+        aspectToggle.checked = true;
+        qualityInput.value = 85;
+        qualityOutput.value = '85%';
+        formatSelect.value = 'image/jpeg';
+        setControlsEnabled(false);
+        cleanupObjectUrl();
+        canvas.width = 0;
+        canvas.height = 0;
+        setStatus('');
+      }
+
+      fileInput.addEventListener('change', (event) => loadFile(event.target.files?.[0]));
+      replaceButton.addEventListener('click', () => fileInput.click());
+      resetButton.addEventListener('click', resetAll);
+      downloadButton.addEventListener('click', resizeAndDownload);
+      widthInput.addEventListener('input', syncFromWidth);
+      heightInput.addEventListener('input', syncFromHeight);
+      formatSelect.addEventListener('change', updateQualityVisibility);
+      qualityInput.addEventListener('input', () => qualityOutput.value = `${qualityInput.value}%`);
+
+      document.querySelectorAll('.preset').forEach((button) => {
+        button.addEventListener('click', () => {
+          if (!sourceImage) {
+            setStatus('Choose an image first.', 'warning');
+            return;
+          }
+          if (button.dataset.original) {
+            widthInput.value = originalWidth;
+            heightInput.value = originalHeight;
+            setStatus('Original dimensions restored.', 'success');
+            return;
+          }
+          applyMaxDimension(Number(button.dataset.max));
+        });
+      });
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZone.classList.remove('dragover');
+        });
+      });
+
+      dropZone.addEventListener('drop', (event) => loadFile(event.dataTransfer.files?.[0]));
+
+      window.addEventListener('beforeunload', cleanupObjectUrl);
+    })();
+  </script>
+</body>
+</html>

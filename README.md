@@ -10,13 +10,15 @@ A growing collection of focused utilities by Quiriën Maduro. Each tool has its 
 | --- | --- | --- | --- |
 | Flash Speed Reader | Read pasted text or Markdown and text files one word at a time, at an adjustable pace. | Reading | [Instructions and source](tools/flash-speed-reader/) |
 
+| Private Image Resizer | Resize and compress images locally, with JPG, WebP, and PNG output. | Images | [Instructions and source](tools/private-image-resizer/) |
+
 ## Use a tool
 
-Download this repository using **Code → Download ZIP**, extract it, and open the tool's `index.html` in your browser. Flash needs no installation, account, or internet connection once downloaded.
+Download this repository using **Code → Download ZIP**, extract it, and open the tool's `index.html` in your browser. These tools need no installation, account, or internet connection once downloaded.
 
 ## Review status
 
-This collection is being prepared and reviewed privately. Flash Speed Reader is the first import; additional tools will be added after their own review. There is no hosted tool site yet.
+This collection is being prepared and reviewed privately. Flash Speed Reader and Private Image Resizer are included; additional tools will be added after their own review. There is no hosted tool site yet.
 
 ## License
 
