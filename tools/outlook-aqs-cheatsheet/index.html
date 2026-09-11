@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Outlook Search Cheatsheet</title>
+<style>
+:root{
+  --teal:#00333F;
+  --teal2:#0F505E;
+  --cream:#F6E5DE;
+  --coral:#E3371B;
+  --lavender:#D09DC3;
+  --charcoal:#121313;
+  --bg:#F7F8F8;
+  --panel:#FFFFFF;
+  --panel2:#F0F4F4;
+  --text:#172326;
+  --muted:#5F6C70;
+  --border:#D7E0E1;
+  --code:#EDF3F3;
+  --shadow:0 8px 30px rgba(0,51,63,.08);
+}
+[data-theme="dark"]{
+  --bg:#0D1517;
+  --panel:#121C1F;
+  --panel2:#182428;
+  --text:#ECF3F4;
+  --muted:#A6B5B9;
+  --border:#2B3C40;
+  --code:#0B292F;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,system-ui,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:var(--teal2)}
+[data-theme="dark"] a{color:#80C5D2}
+.shell{max-width:1180px;margin:0 auto;padding:24px}
+.hero{
+  background:var(--teal);
+  color:white;
+  border-radius:22px;
+  padding:30px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:24px;
+  align-items:start;
+}
+.hero h1{margin:0;font-size:clamp(1.85rem,4vw,3rem);letter-spacing:-.04em}
+.hero p{max-width:760px;margin:10px 0 0;color:#DCEBED}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;padding:7px 11px;font-size:.84rem;margin-bottom:14px
+}
+.theme-btn{
+  border:1px solid rgba(255,255,255,.28);background:transparent;color:white;
+  border-radius:12px;padding:10px 13px
+}
+.featured{
+  margin-top:18px;background:var(--panel);border:1px solid var(--border);
+  border-radius:18px;padding:20px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center
+}
+.featured .eyebrow{font-size:.77rem;text-transform:uppercase;letter-spacing:.08em;color:var(--coral);font-weight:700}
+.featured h2{margin:4px 0 4px;font-size:1.25rem}
+.code{
+  font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+  background:var(--code);border:1px solid var(--border);border-radius:10px;
+  padding:9px 11px;overflow:auto;white-space:nowrap;font-size:.9rem
+}
+.copy{
+  border:1px solid var(--border);background:var(--panel2);color:var(--text);
+  border-radius:10px;padding:8px 11px;min-width:72px
+}
+.copy:hover{border-color:var(--teal2)}
+.toolbar{
+  margin:20px 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap
+}
+.search{
+  flex:1;min-width:240px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text);border-radius:12px;padding:12px 14px;outline:none
+}
+.search:focus{border-color:var(--teal2);box-shadow:0 0 0 3px rgba(15,80,94,.12)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  border:1px solid var(--border);background:var(--panel);color:var(--muted);
+  border-radius:999px;padding:8px 11px;font-size:.86rem
+}
+.chip.active{background:var(--teal);border-color:var(--teal);color:white}
+.grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px
+}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:17px;
+  box-shadow:var(--shadow)
+}
+.card-head{display:flex;justify-content:space-between;gap:12px;align-items:start}
+.tag{
+  font-size:.73rem;border-radius:999px;padding:4px 8px;background:var(--cream);color:var(--charcoal);
+  white-space:nowrap
+}
+[data-theme="dark"] .tag{background:#433C39;color:#F8ECE7}
+.card h3{margin:0;font-size:1rem}
+.card p{margin:7px 0 12px;color:var(--muted);font-size:.9rem}
+.card .code-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.tip{
+  margin-top:12px;border-left:3px solid var(--lavender);padding-left:10px;
+  color:var(--muted);font-size:.82rem
+}
+.section-title{margin:30px 0 12px}
+.section-title h2{margin:0;font-size:1.4rem}
+.section-title p{margin:4px 0 0;color:var(--muted)}
+.builder{
+  background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:20px;
+  box-shadow:var(--shadow)
+}
+.builder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.field label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:5px}
+.field input,.field select{
+  width:100%;border:1px solid var(--border);background:var(--bg);color:var(--text);
+  border-radius:10px;padding:10px 11px
+}
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin:15px 0}
+.check{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.9rem}
+.output{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center
+}
+.output .code{min-height:42px}
+.mini-note{
+  margin-top:12px;font-size:.82rem;color:var(--muted);
+  background:var(--panel2);border-radius:10px;padding:10px 12px
+}
+.reference{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px
+}
+.ref-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+.ref-card h3{font-size:.9rem;margin:0 0 8px}
+.ref-card table{width:100%;border-collapse:collapse;font-size:.82rem}
+.ref-card td{padding:5px 0;border-top:1px solid var(--border);vertical-align:top}
+.ref-card td:first-child{font-family:Consolas,monospace;color:var(--teal2);padding-right:8px}
+[data-theme="dark"] .ref-card td:first-child{color:#80C5D2}
+.warning{
+  border:1px solid #E5C18E;background:#FFF7EA;color:#624217;
+  border-radius:14px;padding:13px 15px;font-size:.88rem;margin-top:14px
+}
+[data-theme="dark"] .warning{background:#342719;color:#F2D6AC;border-color:#6E5433}
+footer{margin:30px 0 8px;color:var(--muted);font-size:.8rem}
+.hidden{display:none!important}
+.count{font-size:.82rem;color:var(--muted);margin-left:auto}
+.kbd{font-family:Consolas,monospace;background:var(--panel2);border:1px solid var(--border);border-bottom-width:2px;border-radius:6px;padding:1px 5px;font-size:.8rem}
+@media(max-width:820px){
+  .grid,.reference,.builder-grid{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr}
+  .featured{grid-template-columns:1fr}
+  .shell{padding:14px}
+}
+@media print{
+  body{background:white;color:black}
+  .shell{max-width:none;padding:0}
+  .theme-btn,.toolbar,.builder,.copy{display:none!important}
+  .hero{background:white;color:black;border:1px solid #bbb}
+  .hero p{color:#444}
+  .grid{grid-template-columns:1fr 1fr}
+  .card,.featured,.ref-card{box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="hero">
+    <div>
+      <div class="badge">Outlook AQS • Offline cheatsheet</div>
+      <h1>Find it. Bulk it. Clear it.</h1>
+      <p>Practical Outlook search recipes for inbox cleanup, meeting noise, newsletters, attachments, people, dates and more precise combinations. Click any query to copy it into Outlook search.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle theme">☾ Dark</button>
+  </header>
+
+  <section class="featured">
+    <div>
+      <div class="eyebrow">The inbox-cleanup trick</div>
+      <h2>Unread meeting requests you already handled in Calendar</h2>
+      <div class="code">kind:meetings AND read:no</div>
+      <p style="margin:8px 0 0;color:var(--muted);font-size:.9rem">Search the mailbox, review the results, then bulk mark as read or remove stale invitations.</p>
+    </div>
+    <button class="copy" data-copy="kind:meetings AND read:no">Copy</button>
+  </section>
+
+  <div class="toolbar">
+    <input class="search" id="filter" type="search" placeholder="Filter cheatsheet, e.g. newsletter, attachment, unread, project…">
+    <div class="chips" id="chips">
+      <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="cleanup">Cleanup</button>
+      <button class="chip" data-cat="meetings">Meetings</button>
+      <button class="chip" data-cat="people">People</button>
+      <button class="chip" data-cat="content">Content</button>
+      <button class="chip" data-cat="files">Files</button>
+      <button class="chip" data-cat="date">Dates</button>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <main class="grid" id="recipes">
+
+    <article class="card" data-cat="meetings cleanup" data-search="meetings unread calendar invites accepted cleanup">
+      <div class="card-head"><h3>Unread meeting items</h3><span class="tag">Meetings</span></div>
+      <p>Find unread appointments and meeting requests in one go.</p>
+      <div class="code-row"><div class="code">kind:meetings AND read:no</div><button class="copy" data-copy="kind:meetings AND read:no">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="meetings date" data-search="old meetings invitations last month">
+      <div class="card-head"><h3>Older meeting noise</h3><span class="tag">Meetings</span></div>
+      <p>Meeting items received last month. Useful before bulk cleanup.</p>
+      <div class="code-row"><div class="code">kind:meetings AND received:"last month"</div><button class="copy" data-copy='kind:meetings AND received:"last month"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup content" data-search="newsletter newsletters mailing list subscriptions unsubscribe marketing digest">
+      <div class="card-head"><h3>Newsletter candidates</h3><span class="tag">Cleanup</span></div>
+      <p>Find messages whose body contains the common unsubscribe marker.</p>
+      <div class="code-row"><div class="code">body:unsubscribe</div><button class="copy" data-copy="body:unsubscribe">Copy</button></div>
+      <div class="tip">Heuristic: transactional mail can also contain “unsubscribe”, so review before deleting.</div>
+    </article>
+
+    <article class="card" data-cat="cleanup content date" data-search="recent newsletters mailing list subscriptions this month">
+      <div class="card-head"><h3>Recent newsletter candidates</h3><span class="tag">Cleanup</span></div>
+      <p>Reduce the noise to unsubscribe-style mail from this month.</p>
+      <div class="code-row"><div class="code">body:unsubscribe AND received:"this month"</div><button class="copy" data-copy='body:unsubscribe AND received:"this month"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup content" data-search="newsletters digest weekly update announcement subject">
+      <div class="card-head"><h3>Newsletter-like subjects</h3><span class="tag">Cleanup</span></div>
+      <p>Search common newsletter wording in the subject.</p>
+      <div class="code-row"><div class="code">subject:(newsletter OR digest OR "weekly update")</div><button class="copy" data-copy='subject:(newsletter OR digest OR "weekly update")'>Copy</button></div>
+      <div class="tip">Adapt the words to patterns you actually see in your mailbox.</div>
+    </article>
+
+    <article class="card" data-cat="cleanup people" data-search="not sent directly to me cc distribution noise">
+      <div class="card-head"><h3>Messages where you were CC’d</h3><span class="tag">Cleanup</span></div>
+      <p>Focus on mail where your address or name appears on the Cc line.</p>
+      <div class="code-row"><div class="code">cc:"your name"</div><button class="copy" data-copy='cc:"your name"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="people" data-search="sender from person colleague">
+      <div class="card-head"><h3>Everything from one sender</h3><span class="tag">People</span></div>
+      <p>Use an email address for the cleanest match.</p>
+      <div class="code-row"><div class="code">from:person@company.com</div><button class="copy" data-copy="from:person@company.com">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="people content" data-search="sender keyword body project customer complex">
+      <div class="card-head"><h3>Sender + exact topic</h3><span class="tag">People</span></div>
+      <p>Messages from one person that mention an exact phrase anywhere Outlook searches.</p>
+      <div class="code-row"><div class="code">from:person@company.com AND "project phoenix"</div><button class="copy" data-copy='from:person@company.com AND "project phoenix"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="people content" data-search="multiple senders or manager supplier vendor">
+      <div class="card-head"><h3>Either of two senders</h3><span class="tag">People</span></div>
+      <p>Combine alternatives using uppercase OR.</p>
+      <div class="code-row"><div class="code">from:alice@company.com OR from:bob@company.com</div><button class="copy" data-copy="from:alice@company.com OR from:bob@company.com">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="content" data-search="subject exact phrase project status report">
+      <div class="card-head"><h3>Exact phrase in subject</h3><span class="tag">Content</span></div>
+      <p>Quotes force the words to appear together in that order.</p>
+      <div class="code-row"><div class="code">subject:"status report"</div><button class="copy" data-copy='subject:"status report"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="content" data-search="body keywords all both project budget">
+      <div class="card-head"><h3>Both keywords in the body</h3><span class="tag">Content</span></div>
+      <p>Require multiple concepts to be present in the message body.</p>
+      <div class="code-row"><div class="code">body:(project AND budget)</div><button class="copy" data-copy="body:(project AND budget)">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="content" data-search="body keyword either one or error failed failure">
+      <div class="card-head"><h3>Either keyword in the body</h3><span class="tag">Content</span></div>
+      <p>Useful when the same issue is described with different wording.</p>
+      <div class="code-row"><div class="code">body:(error OR failed OR failure)</div><button class="copy" data-copy="body:(error OR failed OR failure)">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="content cleanup" data-search="exclude not newsletter automatic automated noreply no-reply">
+      <div class="card-head"><h3>Topic, minus unwanted noise</h3><span class="tag">Content</span></div>
+      <p>Find a topic while excluding a recurring subject pattern.</p>
+      <div class="code-row"><div class="code">"project phoenix" NOT subject:"automated notification"</div><button class="copy" data-copy='"project phoenix" NOT subject:"automated notification"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="content people" data-search="about subject body attachments status report sender">
+      <div class="card-head"><h3>Sender + topic anywhere</h3><span class="tag">Content</span></div>
+      <p><code>about:</code> can match the phrase in subject, body, or attachment contents.</p>
+      <div class="code-row"><div class="code">from:"Alex Smith" AND about:"status report"</div><button class="copy" data-copy='from:"Alex Smith" AND about:"status report"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="files cleanup" data-search="attachments has attachment files">
+      <div class="card-head"><h3>Anything with attachments</h3><span class="tag">Files</span></div>
+      <p>A fast way to isolate likely large or document-heavy mail.</p>
+      <div class="code-row"><div class="code">hasattachment:yes</div><button class="copy" data-copy="hasattachment:yes">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="files content" data-search="attachment filename powerpoint pptx presentation">
+      <div class="card-head"><h3>Specific attachment name</h3><span class="tag">Files</span></div>
+      <p>Search attachment names, or matches inside supported attachment contents.</p>
+      <div class="code-row"><div class="code">attachments:presentation.pptx</div><button class="copy" data-copy="attachments:presentation.pptx">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="files content" data-search="contract attachments body keyword">
+      <div class="card-head"><h3>Topic + attachment</h3><span class="tag">Files</span></div>
+      <p>Find document-bearing messages about a specific topic.</p>
+      <div class="code-row"><div class="code">hasattachment:yes AND body:contract</div><button class="copy" data-copy="hasattachment:yes AND body:contract">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="files cleanup" data-search="large huge messages storage 5 MB mailbox cleanup">
+      <div class="card-head"><h3>Large messages</h3><span class="tag">Cleanup</span></div>
+      <p>Find mail larger than 5 MB before mailbox cleanup.</p>
+      <div class="code-row"><div class="code">messagesize:&gt;5 MB</div><button class="copy" data-copy="messagesize:>5 MB">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup" data-search="unread all unread inbox read false">
+      <div class="card-head"><h3>All unread mail</h3><span class="tag">Cleanup</span></div>
+      <p>Operator equivalent of toggling the Unread filter.</p>
+      <div class="code-row"><div class="code">read:no</div><button class="copy" data-copy="read:no">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup date" data-search="old unread last month inbox zero">
+      <div class="card-head"><h3>Old unread mail</h3><span class="tag">Cleanup</span></div>
+      <p>Find unread items from last month for deliberate bulk triage.</p>
+      <div class="code-row"><div class="code">read:no AND received:"last month"</div><button class="copy" data-copy='read:no AND received:"last month"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup" data-search="flagged follow up action items">
+      <div class="card-head"><h3>Flagged follow-ups</h3><span class="tag">Cleanup</span></div>
+      <p>Surface anything you previously flagged.</p>
+      <div class="code-row"><div class="code">hasflag:true</div><button class="copy" data-copy="hasflag:true">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="date" data-search="today received">
+      <div class="card-head"><h3>Received today</h3><span class="tag">Dates</span></div>
+      <p>A simple date scope that combines well with other operators.</p>
+      <div class="code-row"><div class="code">received:today</div><button class="copy" data-copy="received:today">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="date" data-search="this week received weekly">
+      <div class="card-head"><h3>Received this week</h3><span class="tag">Dates</span></div>
+      <p>Multi-word relative dates use quotes.</p>
+      <div class="code-row"><div class="code">received:"this week"</div><button class="copy" data-copy='received:"this week"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="date people" data-search="sender last week received">
+      <div class="card-head"><h3>Sender + recent window</h3><span class="tag">Dates</span></div>
+      <p>Find mail from a person during a relative period.</p>
+      <div class="code-row"><div class="code">from:person@company.com AND received:"last week"</div><button class="copy" data-copy='from:person@company.com AND received:"last week"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="date content" data-search="date range project quarter between">
+      <div class="card-head"><h3>Date range + topic</h3><span class="tag">Dates</span></div>
+      <p>Useful for reconstructing a project period. Outlook date syntax is locale-sensitive in some clients.</p>
+      <div class="code-row"><div class="code">received:01/01/2026..03/31/2026 AND "project phoenix"</div><button class="copy" data-copy='received:01/01/2026..03/31/2026 AND "project phoenix"'>Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="people" data-search="participants to cc bcc person involved">
+      <div class="card-head"><h3>Person as any recipient</h3><span class="tag">People</span></div>
+      <p>Search To, Cc and Bcc with one operator in Outlook on the web.</p>
+      <div class="code-row"><div class="code">participants:person@company.com</div><button class="copy" data-copy="participants:person@company.com">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup people content" data-search="bulk automated noreply no-reply notification delete">
+      <div class="card-head"><h3>Automated sender + unread</h3><span class="tag">Cleanup</span></div>
+      <p>Great for clearing system notifications after checking the pattern.</p>
+      <div class="code-row"><div class="code">from:no-reply@service.com AND read:no</div><button class="copy" data-copy="from:no-reply@service.com AND read:no">Copy</button></div>
+    </article>
+
+    <article class="card" data-cat="cleanup content date" data-search="old notification automated cleanup older">
+      <div class="card-head"><h3>Old automated notifications</h3><span class="tag">Cleanup</span></div>
+      <p>Combine an exact subject phrase with a time window.</p>
+      <div class="code-row"><div class="code">subject:"notification" AND received:"last month"</div><button class="copy" data-copy='subject:"notification" AND received:"last month"'>Copy</button></div>
+    </article>
+
+  </main>
+
+  <section>
+    <div class="section-title">
+      <h2>Build a query</h2>
+      <p>Fill only what you need. The builder keeps everything local in your browser.</p>
+    </div>
+    <div class="builder">
+      <div class="builder-grid">
+        <div class="field">
+          <label for="from">From</label>
+          <input id="from" placeholder="person@company.com">
+        </div>
+        <div class="field">
+          <label for="subject">Subject contains</label>
+          <input id="subject" placeholder="status report">
+        </div>
+        <div class="field">
+          <label for="body">Body contains</label>
+          <input id="body" placeholder="project budget">
+        </div>
+        <div class="field">
+          <label for="anywhere">Phrase anywhere</label>
+          <input id="anywhere" placeholder="project phoenix">
+        </div>
+        <div class="field">
+          <label for="date">Received</label>
+          <select id="date">
+            <option value="">Any time</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this week">This week</option>
+            <option value="last week">Last week</option>
+            <option value="this month">This month</option>
+            <option value="last month">Last month</option>
+            <option value="last year">Last year</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="exclude">Exclude subject phrase</label>
+          <input id="exclude" placeholder="automated notification">
+        </div>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="unread"> Unread only</label>
+        <label class="check"><input type="checkbox" id="attach"> Has attachment</label>
+        <label class="check"><input type="checkbox" id="meetings"> Meeting items</label>
+        <label class="check"><input type="checkbox" id="flagged"> Flagged</label>
+      </div>
+      <div class="output">
+        <div class="code" id="queryOutput">Start selecting filters…</div>
+        <button class="copy" id="copyBuilder" disabled>Copy</button>
+      </div>
+      <div class="mini-note">Tip: <span class="kbd">AND</span>, <span class="kbd">OR</span> and <span class="kbd">NOT</span> should be uppercase. Quotes are useful for exact phrases.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>Operator reference</h2>
+      <p>The building blocks behind the recipes.</p>
+    </div>
+    <div class="reference">
+      <div class="ref-card">
+        <h3>People & content</h3>
+        <table>
+          <tr><td>from:</td><td>Sender</td></tr>
+          <tr><td>to:</td><td>Recipient</td></tr>
+          <tr><td>cc:</td><td>Cc recipient</td></tr>
+          <tr><td>participants:</td><td>To, Cc or Bcc</td></tr>
+          <tr><td>subject:</td><td>Subject field</td></tr>
+          <tr><td>body:</td><td>Message body</td></tr>
+          <tr><td>about:</td><td>Subject, body or supported attachment content</td></tr>
+        </table>
+      </div>
+      <div class="ref-card">
+        <h3>Status & files</h3>
+        <table>
+          <tr><td>read:no</td><td>Unread</td></tr>
+          <tr><td>hasflag:true</td><td>Flagged</td></tr>
+          <tr><td>hasattachment:yes</td><td>Has attachments</td></tr>
+          <tr><td>attachments:</td><td>Attachment name/content</td></tr>
+          <tr><td>messagesize:&gt;5 MB</td><td>Large messages</td></tr>
+          <tr><td>kind:meetings</td><td>Meeting / appointment items</td></tr>
+          <tr><td>category:</td><td>Assigned category</td></tr>
+        </table>
+      </div>
+      <div class="ref-card">
+        <h3>Logic & time</h3>
+        <table>
+          <tr><td>AND</td><td>Both conditions</td></tr>
+          <tr><td>OR</td><td>Either condition</td></tr>
+          <tr><td>NOT</td><td>Exclude a condition</td></tr>
+          <tr><td>"phrase"</td><td>Exact phrase</td></tr>
+          <tr><td>( ... )</td><td>Group logic</td></tr>
+          <tr><td>received:</td><td>Received date/window</td></tr>
+          <tr><td>sent:</td><td>Sent date/window</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="warning">
+      Outlook search behavior can differ slightly between classic Outlook, new Outlook and Outlook on the web. Start with a search, inspect the result set, then bulk mark, move or delete. For newsletter detection especially, treat the query as a candidate finder rather than a perfect classifier.
+    </div>
+  </section>
+
+  <footer>
+    Verified against Microsoft Outlook search documentation and Microsoft Exchange AQS references, August 2026. This file has no external scripts, fonts, tracking or network dependencies.
+  </footer>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  const saved = localStorage.getItem('outlook-cheatsheet-theme');
+  const preferredDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (preferredDark ? 'dark' : 'light');
+  if (initial === 'dark') root.setAttribute('data-theme','dark');
+
+  function updateThemeLabel(){
+    const dark = root.getAttribute('data-theme') === 'dark';
+    themeBtn.textContent = dark ? '☀ Light' : '☾ Dark';
+  }
+  updateThemeLabel();
+
+  themeBtn.addEventListener('click', () => {
+    const dark = root.getAttribute('data-theme') === 'dark';
+    if (dark) root.removeAttribute('data-theme'); else root.setAttribute('data-theme','dark');
+    localStorage.setItem('outlook-cheatsheet-theme', dark ? 'light' : 'dark');
+    updateThemeLabel();
+  });
+
+  function fallbackCopy(text, button){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    flash(button, ok ? 'Copied' : 'Select');
+  }
+
+  function copyText(text, button){
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => flash(button,'Copied')).catch(() => fallbackCopy(text, button));
+    } else {
+      fallbackCopy(text, button);
+    }
+  }
+
+  function flash(button, label){
+    const old = button.textContent;
+    button.textContent = label;
+    setTimeout(() => button.textContent = old, 1100);
+  }
+
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => copyText(btn.dataset.copy, btn));
+  });
+
+  const filter = document.getElementById('filter');
+  const cards = [...document.querySelectorAll('#recipes .card')];
+  const count = document.getElementById('count');
+  let category = 'all';
+
+  function applyFilter(){
+    const q = filter.value.trim().toLowerCase();
+    let visible = 0;
+    cards.forEach(card => {
+      const catOk = category === 'all' || card.dataset.cat.split(' ').includes(category);
+      const hay = (card.dataset.search + ' ' + card.innerText).toLowerCase();
+      const textOk = !q || hay.includes(q);
+      const show = catOk && textOk;
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    count.textContent = visible + (visible === 1 ? ' recipe' : ' recipes');
+  }
+  filter.addEventListener('input', applyFilter);
+
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      category = chip.dataset.cat;
+      applyFilter();
+    });
+  });
+  applyFilter();
+
+  const ids = ['from','subject','body','anywhere','date','exclude','unread','attach','meetings','flagged'];
+  const controls = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+  const output = document.getElementById('queryOutput');
+  const copyBuilder = document.getElementById('copyBuilder');
+
+  const exact = v => `"${v.replaceAll('"','').trim()}"`;
+
+  function build(){
+    const parts = [];
+    if (controls.from.value.trim()) parts.push(`from:${controls.from.value.trim()}`);
+    if (controls.subject.value.trim()) parts.push(`subject:${exact(controls.subject.value)}`);
+    if (controls.body.value.trim()) parts.push(`body:${exact(controls.body.value)}`);
+    if (controls.anywhere.value.trim()) parts.push(exact(controls.anywhere.value));
+    if (controls.date.value) parts.push(`received:${controls.date.value.includes(' ') ? exact(controls.date.value) : controls.date.value}`);
+    if (controls.unread.checked) parts.push('read:no');
+    if (controls.attach.checked) parts.push('hasattachment:yes');
+    if (controls.meetings.checked) parts.push('kind:meetings');
+    if (controls.flagged.checked) parts.push('hasflag:true');
+    if (controls.exclude.value.trim()) parts.push(`NOT subject:${exact(controls.exclude.value)}`);
+
+    const query = parts.join(' AND ');
+    output.textContent = query || 'Start selecting filters…';
+    copyBuilder.disabled = !query;
+    copyBuilder.dataset.query = query;
+  }
+
+  ids.forEach(id => controls[id].addEventListener(controls[id].type === 'checkbox' ? 'change' : 'input', build));
+  controls.date.addEventListener('change', build);
+  copyBuilder.addEventListener('click', () => copyText(copyBuilder.dataset.query || '', copyBuilder));
+  build();
+})();
+</script>
+</body>
+</html>
