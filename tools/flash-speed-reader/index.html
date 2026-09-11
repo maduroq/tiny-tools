@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash — Speed Reader</title>
+<style>
+  /* ---------- Themes ---------- */
+  :root{
+    --bg:#000; --fg:#f2f2f2; --dim:#6f6f6f; --accent:#ff5252;
+    --panel:#0e0e0e; --border:#222; --word-size:64px; --font:var(--sans);
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --serif: Georgia,"Times New Roman",Cambria,serif;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  body[data-theme="dark"]  { --bg:#15171c; --fg:#e7e7e7; --dim:#7d828c; --accent:#ff6b6b; --panel:#1c1f25; --border:#2b2f37; }
+  body[data-theme="warm"]  { --bg:#1b160f; --fg:#ecd9b4; --dim:#9b8a67; --accent:#ff9d54; --panel:#241c12; --border:#352a1b; }
+  body[data-theme="sepia"] { --bg:#f3e9d2; --fg:#564536; --dim:#9c8a6e; --accent:#c0392b; --panel:#ece0c4; --border:#dccba6; }
+  body[data-theme="light"] { --bg:#faf9f6; --fg:#1f1f1f; --dim:#9a9a9a; --accent:#d6336c; --panel:#ffffff; --border:#e6e4df; }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--sans); transition:background .25s,color .25s;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px; flex:0 0 auto;
+  }
+  .brand{font-size:14px; letter-spacing:.22em; text-transform:uppercase; color:var(--dim); font-weight:600}
+  .brand b{color:var(--fg)}
+  .gear{
+    background:none; border:1px solid var(--border); color:var(--fg);
+    width:38px; height:38px; border-radius:9px; cursor:pointer; font-size:17px;
+    display:flex; align-items:center; justify-content:center; transition:.15s;
+  }
+  .gear:hover{border-color:var(--accent); color:var(--accent)}
+
+  main{flex:1 1 auto; position:relative; display:flex; min-height:0}
+
+  /* ---------- Setup view ---------- */
+  #setup{
+    width:100%; max-width:720px; margin:auto; padding:20px 24px 40px;
+    display:flex; flex-direction:column; gap:16px; overflow:auto;
+  }
+  textarea{
+    width:100%; min-height:200px; resize:vertical; padding:16px;
+    background:var(--panel); color:var(--fg); border:1px solid var(--border);
+    border-radius:12px; font-size:15px; line-height:1.55; font-family:var(--font);
+    outline:none;
+  }
+  textarea:focus{border-color:var(--accent)}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .spread{justify-content:space-between}
+  .muted{color:var(--dim); font-size:13px}
+  .btn{
+    border:1px solid var(--border); background:var(--panel); color:var(--fg);
+    padding:10px 16px; border-radius:10px; cursor:pointer; font-size:14px;
+    transition:.15s; font-family:inherit;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{
+    background:var(--accent); border-color:var(--accent);
+    color:#fff; font-weight:600; padding:12px 26px; flex:1; font-size:15px;
+  }
+  body[data-theme="sepia"] .btn.primary,
+  body[data-theme="light"] .btn.primary{color:#fff}
+  .btn.primary:hover{filter:brightness(1.08)}
+  .linklike{background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;padding:0;font-family:inherit}
+  .linklike:hover{text-decoration:underline}
+
+  /* ---------- Reader view ---------- */
+  #reader{
+    width:100%; display:none; flex-direction:column; align-items:stretch;
+    justify-content:center; padding:0; min-height:0;
+  }
+  body.reading #setup{display:none}
+  body.reading #reader{display:flex}
+
+  .stage{
+    flex:1 1 auto; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:0; min-height:0; position:relative;
+  }
+  .reticle{position:relative; width:min(900px,92vw)}
+  .guide{height:1px; background:var(--border); width:100%}
+  .guide .tick{
+    position:absolute; left:50%; transform:translateX(-50%);
+    width:2px; height:14px; background:var(--dim);
+  }
+  .guide.top .tick{bottom:0}
+  .guide.bot .tick{top:0}
+
+  .word{
+    font-family:var(--font); font-size:var(--word-size); font-weight:500;
+    line-height:1.2; padding:26px 0; user-select:none;
+    display:grid; grid-template-columns:1fr auto 1fr; align-items:baseline;
+    white-space:pre;
+  }
+  .word .pre{text-align:right}
+  .word .piv{color:var(--accent); text-align:center}
+  .word .post{text-align:left}
+  .endcard{font-size:18px; color:var(--dim); padding:40px; text-align:center}
+  .endcard b{color:var(--fg)}
+
+  /* ---------- Bottom controls ---------- */
+  .dock{flex:0 0 auto; padding:18px 20px 24px; display:flex; flex-direction:column; gap:14px}
+  .progress{
+    height:6px; background:var(--border); border-radius:6px; cursor:pointer; position:relative;
+  }
+  .progress .fill{height:100%; width:0%; background:var(--accent); border-radius:6px}
+  .ctrls{display:flex; align-items:center; justify-content:center; gap:10px}
+  .ctrls .meta{color:var(--dim); font-size:13px; min-width:120px}
+  .ctrls .meta.right{text-align:right}
+  .ctrls .center{display:flex; gap:8px; align-items:center}
+  .cbtn{
+    border:1px solid var(--border); background:var(--panel); color:var(--fg);
+    width:44px; height:44px; border-radius:11px; cursor:pointer; font-size:16px;
+    display:flex; align-items:center; justify-content:center; transition:.15s;
+  }
+  .cbtn:hover{border-color:var(--accent); color:var(--accent)}
+  .cbtn.play{width:58px; height:58px; font-size:20px; background:var(--accent); border-color:var(--accent); color:#fff}
+  body[data-theme="sepia"] .cbtn.play,
+  body[data-theme="light"] .cbtn.play{color:#fff}
+  .cbtn.play:hover{filter:brightness(1.08); color:#fff}
+  .hint{text-align:center; color:var(--dim); font-size:11.5px; letter-spacing:.02em}
+  .meta b{color:var(--fg); font-weight:600}
+
+  /* ---------- Settings drawer ---------- */
+  .scrim{position:fixed; inset:0; background:rgba(0,0,0,.45); opacity:0; pointer-events:none; transition:.2s; z-index:8}
+  body.settings-open .scrim{opacity:1; pointer-events:auto}
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:320px; max-width:86vw;
+    background:var(--panel); border-left:1px solid var(--border); z-index:9;
+    transform:translateX(100%); transition:transform .22s; padding:22px;
+    display:flex; flex-direction:column; gap:22px; overflow:auto;
+  }
+  body.settings-open .drawer{transform:translateX(0)}
+  .drawer h2{margin:0; font-size:13px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim)}
+  .field{display:flex; flex-direction:column; gap:8px}
+  .field > label{font-size:13px; color:var(--fg); display:flex; justify-content:space-between}
+  .field > label span{color:var(--dim)}
+  input[type=range]{width:100%; accent-color:var(--accent); cursor:pointer}
+  .seg{display:flex; flex-wrap:wrap; gap:6px}
+  .seg button{
+    flex:1 1 auto; min-width:60px; padding:9px 8px; border:1px solid var(--border);
+    background:transparent; color:var(--fg); border-radius:9px; cursor:pointer; font-size:13px;
+    font-family:inherit; transition:.15s;
+  }
+  .seg button.active{border-color:var(--accent); background:var(--accent); color:#fff}
+  body[data-theme="sepia"] .seg button.active,
+  body[data-theme="light"] .seg button.active{color:#fff}
+  .swatches{display:flex; gap:8px}
+  .swatch{flex:1; height:42px; border-radius:9px; border:2px solid var(--border); cursor:pointer; position:relative; overflow:hidden}
+  .swatch.active{border-color:var(--accent)}
+  .swatch span{position:absolute; left:7px; bottom:5px; font-size:18px; font-weight:700}
+  .closeX{position:absolute; top:18px; right:18px; background:none; border:none; color:var(--dim); font-size:20px; cursor:pointer}
+  .closeX:hover{color:var(--fg)}
+  @media (max-width:560px){
+    .ctrls .meta{display:none}
+    #setup{padding:12px 16px 32px}
+  }
+</style>
+</head>
+<body data-theme="black">
+
+  <header>
+    <div class="brand"><b>Flash</b> · speed reader</div>
+    <button class="gear" id="gearBtn" title="Settings (S)">⚙</button>
+  </header>
+
+  <main>
+    <!-- SETUP -->
+    <section id="setup">
+      <div class="row spread">
+        <div class="muted">Paste text, or load a <b>.md</b> / <b>.txt</b> file.</div>
+        <button class="linklike" id="sampleBtn">Load sample text</button>
+      </div>
+      <textarea id="input" placeholder="Paste a few paragraphs here…"></textarea>
+      <div class="row spread">
+        <div class="row">
+          <button class="btn" id="fileBtn">📄 Load file</button>
+          <button class="btn" id="clearBtn">Clear</button>
+          <input type="file" id="fileInput" accept=".md,.txt,.markdown,text/plain,text/markdown" hidden>
+        </div>
+        <div class="muted" id="stat">0 words</div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="startBtn">▶ Start reading</button>
+      </div>
+      <div class="hint">Settings (speed · size · font · colour) live behind the ⚙ — and stay open while you read.</div>
+    </section>
+
+    <!-- READER -->
+    <section id="reader">
+      <div class="stage">
+        <div class="reticle" id="reticle">
+          <div class="guide top"><div class="tick"></div></div>
+          <div class="word" id="word"><span class="pre"></span><span class="piv"></span><span class="post"></span></div>
+          <div class="guide bot"><div class="tick"></div></div>
+        </div>
+      </div>
+      <div class="dock">
+        <div class="progress" id="progress"><div class="fill" id="fill"></div></div>
+        <div class="ctrls">
+          <div class="meta" id="metaLeft"><b id="wpmLabel">350</b> wpm</div>
+          <div class="center">
+            <button class="cbtn" id="backBtn" title="Back (←)">⏪</button>
+            <button class="cbtn play" id="playBtn" title="Play / Pause (space)">▶</button>
+            <button class="cbtn" id="fwdBtn" title="Forward (→)">⏩</button>
+            <button class="cbtn" id="restartBtn" title="Restart (R)">⟲</button>
+            <button class="cbtn" id="exitBtn" title="Edit text (Esc)">✎</button>
+          </div>
+          <div class="meta right" id="metaRight">0 / 0 · 0:00 left</div>
+        </div>
+        <div class="hint">space play/pause · ← → step · ↑ ↓ speed · R restart · Esc edit</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer">
+    <button class="closeX" id="closeBtn">✕</button>
+    <h2>Reading</h2>
+
+    <div class="field">
+      <label>Speed <span><b id="wpmOut">350</b> wpm</span></label>
+      <input type="range" id="wpm" min="100" max="1200" step="10" value="350">
+    </div>
+
+    <div class="field">
+      <label>Word size <span id="sizeOut">64 px</span></label>
+      <input type="range" id="size" min="24" max="160" step="2" value="64">
+    </div>
+
+    <div class="field">
+      <label>Font</label>
+      <div class="seg" id="fontSeg">
+        <button data-font="var(--sans)" class="active">Sans</button>
+        <button data-font="var(--serif)">Serif</button>
+        <button data-font="var(--mono)">Mono</button>
+      </div>
+    </div>
+
+    <h2>Colour</h2>
+    <div class="field">
+      <div class="swatches" id="themeSeg">
+        <div class="swatch active" data-theme="black" style="background:#000;color:#fff"><span>A</span></div>
+        <div class="swatch" data-theme="dark"  style="background:#15171c;color:#e7e7e7"><span>A</span></div>
+        <div class="swatch" data-theme="warm"  style="background:#1b160f;color:#ecd9b4"><span>A</span></div>
+        <div class="swatch" data-theme="sepia" style="background:#f3e9d2;color:#564536"><span>A</span></div>
+        <div class="swatch" data-theme="light" style="background:#faf9f6;color:#1f1f1f"><span>A</span></div>
+      </div>
+      <div class="muted">Black · Dark · Warm · Sepia · Light</div>
+    </div>
+
+    <div class="muted" style="margin-top:auto">Nothing is saved — refresh resets everything.</div>
+  </aside>
+
+<script>
+(function(){
+  "use strict";
+  const $ = s => document.querySelector(s);
+
+  const state = { tokens:[], index:0, playing:false, wpm:350, timer:null, done:false };
+
+  // ---- Elements ----
+  const input=$("#input"), stat=$("#stat"), word=$("#word");
+  const pre=word.querySelector(".pre"), piv=word.querySelector(".piv"), post=word.querySelector(".post");
+  const fill=$("#fill"), progress=$("#progress");
+  const playBtn=$("#playBtn"), wpmLabel=$("#wpmLabel"), metaRight=$("#metaRight");
+
+  // ---------- Text processing ----------
+  function stripMarkdown(md){
+    return md
+      .replace(/```[\s\S]*?```/g," ")
+      .replace(/~~~[\s\S]*?~~~/g," ")
+      .replace(/`([^`]+)`/g,"$1")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g," ")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g,"$1")
+      .replace(/^\s{0,3}#{1,6}\s+/gm,"")
+      .replace(/^\s{0,3}>\s?/gm,"")
+      .replace(/^\s{0,3}[-*+]\s+/gm,"")
+      .replace(/^\s{0,3}\d+\.\s+/gm,"")
+      .replace(/(\*\*|__)(.*?)\1/g,"$2")
+      .replace(/(\*|_)(.*?)\1/g,"$2")
+      .replace(/~~(.*?)~~/g,"$2")
+      .replace(/^\s*([-*_]\s*){3,}\s*$/gm," ")
+      .replace(/\|/g," ")
+      .replace(/<[^>]+>/g," ");
+  }
+
+  function pivotIndex(w){
+    const n=w.length;
+    if(n<=1) return 0;
+    if(n<=5) return 1;
+    if(n<=9) return 2;
+    if(n<=13) return 3;
+    return 4;
+  }
+
+  function makeToken(w){
+    let delay=1;
+    if(w.length>8) delay += (w.length-8)*0.04;       // long words linger
+    if(/[,;:]$/.test(w)) delay += 0.5;                // minor punctuation
+    if(/[.!?…)"]$/.test(w)) delay += 1.0;             // sentence end
+    if(/[—–]$/.test(w)) delay += 0.4;                 // dashes
+    if(/[0-9]/.test(w)) delay += 0.2;                 // numbers
+    return { word:w, pivot:pivotIndex(w), delay };
+  }
+
+  function buildTokens(text){
+    const cleaned=stripMarkdown(text);
+    const paras=cleaned.split(/\n\s*\n/);
+    const tokens=[];
+    paras.forEach((para,pi)=>{
+      const words=para.replace(/\s+/g," ").trim().split(" ").filter(Boolean);
+      words.forEach((w,wi)=>{
+        const t=makeToken(w);
+        if(wi===words.length-1 && pi<paras.length-1) t.delay+=0.9; // paragraph pause
+        tokens.push(t);
+      });
+    });
+    return tokens;
+  }
+
+  function updateStat(){
+    const n=buildTokens(input.value).length;
+    const mins=n/state.wpm;
+    stat.textContent = n ? `${n.toLocaleString()} words · ~${fmtMin(mins)} at ${state.wpm} wpm` : "0 words";
+  }
+  function fmtMin(m){
+    const s=Math.round(m*60);
+    const mm=Math.floor(s/60), ss=s%60;
+    return mm? `${mm}m ${ss}s` : `${ss}s`;
+  }
+
+  // ---------- Rendering ----------
+  function renderWord(i){
+    const t=state.tokens[i];
+    if(!t) return;
+    const w=t.word, p=t.pivot;
+    pre.textContent  = w.slice(0,p);
+    piv.textContent  = w.slice(p,p+1);
+    post.textContent = w.slice(p+1);
+  }
+
+  function updateProgress(){
+    const n=state.tokens.length||1;
+    const frac=Math.min(state.index/n,1);
+    fill.style.width=(frac*100).toFixed(2)+"%";
+    const remain=Math.max(n-state.index,0)/state.wpm;
+    metaRight.textContent=`${Math.min(state.index+ (state.done?0:1), n)} / ${n} · ${fmtMin(remain)} left`;
+  }
+
+  function showEnd(){
+    word.innerHTML='<div class="endcard">✓ <b>Done.</b><br>Press R to read again.</div>';
+  }
+  function resetWordEl(){
+    word.innerHTML='<span class="pre"></span><span class="piv"></span><span class="post"></span>';
+  }
+
+  // ---------- Playback ----------
+  function step(){
+    if(!state.playing) return;
+    if(state.index>=state.tokens.length){ finish(); return; }
+    renderWord(state.index);
+    updateProgress();
+    const base=60000/state.wpm;
+    const delay=base*state.tokens[state.index].delay;
+    state.index++;
+    state.timer=setTimeout(step,delay);
+  }
+  function play(){
+    if(!state.tokens.length) return;
+    if(state.done){ restart(); }
+    state.playing=true;
+    playBtn.textContent="⏸";
+    step();
+  }
+  function pause(){
+    state.playing=false;
+    clearTimeout(state.timer);
+    playBtn.textContent="▶";
+  }
+  function toggle(){ state.playing?pause():play(); }
+  function finish(){
+    pause();
+    state.done=true;
+    state.index=state.tokens.length;
+    showEnd();
+    updateProgress();
+  }
+  function restart(){
+    pause();
+    state.done=false;
+    state.index=0;
+    resetWordEl();
+    seekRefs();
+    renderWord(0);
+    updateProgress();
+  }
+  function seekRefs(){ // re-grab spans after innerHTML reset
+    window._pre=word.querySelector(".pre");
+  }
+  function stepBy(d){
+    pause();
+    if(state.done){ state.done=false; resetWordEl(); }
+    state.index=Math.max(0,Math.min(state.index+d,state.tokens.length-1));
+    renderWord(state.index);
+    updateProgress();
+  }
+
+  // patch render/end to always use live spans
+  function renderWord(i){
+    const t=state.tokens[i]; if(!t) return;
+    let a=word.querySelector(".pre"), b=word.querySelector(".piv"), c=word.querySelector(".post");
+    if(!a||!b||!c){ resetWordEl(); a=word.querySelector(".pre"); b=word.querySelector(".piv"); c=word.querySelector(".post"); }
+    const w=t.word, p=t.pivot;
+    a.textContent=w.slice(0,p); b.textContent=w.slice(p,p+1); c.textContent=w.slice(p+1);
+  }
+
+  // ---------- Start / Exit ----------
+  function start(){
+    const tokens=buildTokens(input.value);
+    if(!tokens.length){
+      input.focus();
+      stat.textContent="Paste or load some text first.";
+      return;
+    }
+    state.tokens=tokens; state.index=0; state.done=false;
+    document.body.classList.add("reading");
+    resetWordEl();
+    renderWord(0);
+    updateProgress();
+    setTimeout(play,250);
+  }
+  function exit(){
+    pause();
+    document.body.classList.remove("reading");
+    updateStat();
+  }
+
+  // ---------- Settings ----------
+  const root=document.documentElement.style;
+  $("#wpm").addEventListener("input",e=>{
+    state.wpm=+e.target.value;
+    $("#wpmOut").textContent=state.wpm;
+    wpmLabel.textContent=state.wpm;
+    updateProgress(); updateStat();
+  });
+  $("#size").addEventListener("input",e=>{
+    root.setProperty("--word-size",e.target.value+"px");
+    $("#sizeOut").textContent=e.target.value+" px";
+  });
+  $("#fontSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    root.setProperty("--font",b.dataset.font);
+    input.style.fontFamily=b.dataset.font;
+  });
+  $("#themeSeg").addEventListener("click",e=>{
+    const s=e.target.closest(".swatch"); if(!s) return;
+    [...e.currentTarget.children].forEach(x=>x.classList.remove("active"));
+    s.classList.add("active");
+    document.body.setAttribute("data-theme",s.dataset.theme);
+  });
+
+  // ---------- Drawer ----------
+  function openDrawer(){ document.body.classList.add("settings-open"); }
+  function closeDrawer(){ document.body.classList.remove("settings-open"); }
+  $("#gearBtn").addEventListener("click",openDrawer);
+  $("#closeBtn").addEventListener("click",closeDrawer);
+  $("#scrim").addEventListener("click",closeDrawer);
+
+  // ---------- File / input ----------
+  $("#fileBtn").addEventListener("click",()=>$("#fileInput").click());
+  $("#fileInput").addEventListener("change",e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ input.value=r.result; updateStat(); };
+    r.readAsText(f);
+    e.target.value="";
+  });
+  $("#clearBtn").addEventListener("click",()=>{ input.value=""; updateStat(); input.focus(); });
+  $("#sampleBtn").addEventListener("click",()=>{ input.value=SAMPLE; updateStat(); });
+  input.addEventListener("input",updateStat);
+
+  // ---------- Buttons ----------
+  $("#startBtn").addEventListener("click",start);
+  playBtn.addEventListener("click",toggle);
+  $("#backBtn").addEventListener("click",()=>stepBy(-1));
+  $("#fwdBtn").addEventListener("click",()=>stepBy(1));
+  $("#restartBtn").addEventListener("click",restart);
+  $("#exitBtn").addEventListener("click",exit);
+  progress.addEventListener("click",e=>{
+    const rect=progress.getBoundingClientRect();
+    const frac=Math.min(Math.max((e.clientX-rect.left)/rect.width,0),1);
+    const wasPlaying=state.playing; pause();
+    state.done=false;
+    state.index=Math.floor(frac*state.tokens.length);
+    renderWord(state.index); updateProgress();
+    if(wasPlaying) play();
+  });
+
+  // ---------- Keyboard ----------
+  document.addEventListener("keydown",e=>{
+    const typing = document.activeElement===input;
+    if(e.key==="s"||e.key==="S"){ if(!typing){ document.body.classList.toggle("settings-open"); e.preventDefault(); } return; }
+    if(!document.body.classList.contains("reading")) return;
+    switch(e.key){
+      case " ": e.preventDefault(); toggle(); break;
+      case "ArrowLeft": e.preventDefault(); stepBy(-1); break;
+      case "ArrowRight": e.preventDefault(); stepBy(1); break;
+      case "ArrowUp": e.preventDefault(); setWpm(state.wpm+25); break;
+      case "ArrowDown": e.preventDefault(); setWpm(state.wpm-25); break;
+      case "r": case "R": restart(); break;
+      case "Escape": exit(); break;
+    }
+  });
+  function setWpm(v){
+    v=Math.max(100,Math.min(1200,v));
+    state.wpm=v;
+    $("#wpm").value=v; $("#wpmOut").textContent=v; wpmLabel.textContent=v;
+    updateProgress();
+  }
+
+  // ---------- Sample ----------
+  const SAMPLE=
+`# Reading at the speed of sight
+
+Most people read at about 200 to 300 words per minute. The bottleneck is not your eyes — it is the tiny, jerky movements they make as they hop across a line of text, pausing four or five times per line.
+
+This tool removes the hopping. Each word appears in the same spot, one after another, so your eyes never have to move. The coloured letter marks the natural focus point of the word, letting your brain recognise it almost instantly.
+
+Start slow, around 300 words per minute, and nudge the speed up as it starts to feel comfortable. Many readers reach 500 or 600 within a single session — and finish a long article in a fraction of the usual time.`;
+
+  updateStat();
+})();
+</script>
+</body>
+</html>
