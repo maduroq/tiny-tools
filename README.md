@@ -11,6 +11,7 @@ A growing collection of focused utilities by Quiriën Maduro. Each tool has its 
 | Flash Speed Reader | Read pasted text or Markdown and text files one word at a time, at an adjustable pace. | Reading | [Instructions and source](tools/flash-speed-reader/) |
 | Private Image Resizer | Resize and compress images locally, with JPG, WebP, and PNG output. | Images | [Instructions and source](tools/private-image-resizer/) |
 | Outlook AQS · Offline Cheatsheet | Browse, filter, and build Outlook search queries. | Microsoft 365 | [Instructions and source](tools/outlook-aqs-cheatsheet/) |
+| Post Polish | Format posts for LinkedIn and Viva Engage, then copy them ready to paste. | Writing | [Instructions and source](tools/post-polish/) |
 
 ## Use in your browser — no download
 
@@ -25,6 +26,7 @@ Alternatively, add `https://htmlpreview.github.io/?` before the GitHub file URL.
 - [Open Flash Speed Reader](https://htmlpreview.github.io/?https://github.com/maduroq/tiny-tools/blob/main/tools/flash-speed-reader/index.html)
 - [Open Private Image Resizer](https://htmlpreview.github.io/?https://github.com/maduroq/tiny-tools/blob/main/tools/private-image-resizer/index.html)
 - [Open Outlook AQS · Offline Cheatsheet](https://htmlpreview.github.io/?https://github.com/maduroq/tiny-tools/blob/main/tools/outlook-aqs-cheatsheet/index.html)
+- [Open Post Polish](https://htmlpreview.github.io/?https://github.com/maduroq/tiny-tools/blob/main/tools/post-polish/index.html)
 
 HTML Preview is a third-party service and requires an internet connection to load the tool. For fully offline use, download the HTML file as described below.
 
@@ -34,7 +36,7 @@ Download this repository using **Code → Download ZIP**, extract it, and open t
 
 ## Collection status
 
-This public collection includes Flash Speed Reader, Private Image Resizer, and the Outlook AQS cheatsheet. Additional tools will be added after review.
+This public collection includes Flash Speed Reader, Private Image Resizer, the Outlook AQS cheatsheet, and Post Polish. Additional tools will be added after review.
 
 ## License
 

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A privacy-first offline formatter for LinkedIn and Viva Engage." />
+  <meta name="color-scheme" content="light dark" />
+  <title>Post Polish | Maduroq Tiny Tools</title>
+  <style>
+    :root {
+      /* Maduroq palette, based on the provided brand image */
+      --mq-teal-dark: #00333f;
+      --mq-teal-mid: #0f505e;
+      --mq-cream: #f6e5de;
+      --mq-coral: #e3371b;
+      --mq-lavender: #d09dc3;
+      --mq-charcoal: #121313;
+      --mq-soft-grey: #c6c1be;
+
+      --bg: #ffffff;
+      --bg-soft: #f7f7f7;
+      --surface: #ffffff;
+      --surface-soft: #f5f7f8;
+      --text: #1c2326;
+      --muted: #667279;
+      --line: #d9dee2;
+      --primary: var(--mq-teal-dark);
+      --primary-strong: var(--mq-teal-mid);
+      --accent: var(--mq-coral);
+      --accent-soft: var(--mq-lavender);
+      --brand-text: var(--mq-cream);
+      --shadow: 0 14px 40px rgba(0, 51, 63, 0.10);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0b1418;
+      --bg-soft: #0f1b20;
+      --surface: #122126;
+      --surface-soft: #18292f;
+      --text: #f6f7f8;
+      --muted: #a9b5bb;
+      --line: #294048;
+      --primary: var(--mq-teal-mid);
+      --primary-strong: var(--mq-teal-dark);
+      --accent: var(--mq-coral);
+      --accent-soft: var(--mq-lavender);
+      --brand-text: var(--mq-cream);
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-soft);
+      color: var(--text);
+    }
+
+    body {
+      padding: 0;
+    }
+
+    button, select, input {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1140px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .mark {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: var(--primary);
+      display: grid;
+      place-items: center;
+      color: var(--brand-text);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-meta h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+      letter-spacing: -0.04em;
+    }
+
+    .sub {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .privacy-badge,
+    .theme-toggle {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .theme-toggle button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--primary);
+      color: var(--brand-text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+
+    .platform {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 12px;
+      background: var(--bg-soft);
+      margin-right: 4px;
+    }
+
+    .platform button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .platform button[aria-selected="true"] {
+      background: var(--primary);
+      color: var(--brand-text);
+    }
+
+    .tool {
+      min-width: 38px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .tool:hover,
+    .tool:focus-visible,
+    .primary:hover,
+    .secondary:hover,
+    .ghost:hover,
+    .emoji:hover {
+      border-color: var(--primary);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .divider {
+      width: 1px;
+      height: 28px;
+      background: var(--line);
+      margin: 0 2px;
+    }
+
+    .editor-wrap { padding: 14px; }
+
+    #editor {
+      min-height: 480px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      outline: none;
+      line-height: 1.62;
+      font-size: 1rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: var(--text);
+    }
+
+    #editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    #editor:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(0, 51, 63, 0.10);
+    }
+
+    .statusbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px 14px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .side-card {
+      padding: 17px;
+    }
+
+    .side-card h2 {
+      margin: 0 0 12px;
+      font-size: 0.96rem;
+      letter-spacing: -0.02em;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .emoji {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--surface-soft);
+      cursor: pointer;
+      font-size: 1.15rem;
+    }
+
+    .actions {
+      display: grid;
+      gap: 9px;
+    }
+
+    .primary,
+    .secondary,
+    .ghost {
+      border-radius: 12px;
+      padding: 11px 14px;
+      cursor: pointer;
+      font-weight: 750;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .primary {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: var(--brand-text);
+    }
+
+    .secondary {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .ghost {
+      border: 1px dashed var(--line);
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .hint {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .platform-note {
+      border-left: 3px solid var(--accent);
+      padding-left: 10px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      background: var(--primary);
+      color: var(--brand-text);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      transition: 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    footer {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .side { display: grid; grid-template-columns: 1fr 1fr; }
+      #editor { min-height: 390px; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 20px, 1140px); padding-top: 16px; }
+      header { align-items: flex-start; flex-direction: column; }
+      .header-actions { width: 100%; justify-content: flex-start; }
+      .privacy-badge { display: none; }
+      .side { grid-template-columns: 1fr; }
+      .platform { width: 100%; }
+      .platform button { flex: 1; }
+      .divider { display: none; }
+      #editor { min-height: 340px; padding: 16px; }
+      .statusbar { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="mark" aria-hidden="true">Mq</div>
+        <div class="brand-meta">
+          <h1>Post Polish</h1>
+          <p class="sub">A Maduroq Tiny Tool</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="privacy-badge">Local only, no uploads, no tracking</div>
+        <div class="theme-toggle" aria-label="Theme mode">
+          <button id="lightThemeBtn" type="button" aria-pressed="true">Light</button>
+          <button id="darkThemeBtn" type="button" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app">
+      <section class="panel" aria-label="Post editor">
+        <div class="toolbar">
+          <div class="platform" role="tablist" aria-label="Publishing destination">
+            <button id="linkedinTab" role="tab" aria-selected="true">LinkedIn</button>
+            <button id="vivaTab" role="tab" aria-selected="false">Viva Engage</button>
+          </div>
+
+          <button class="tool" data-command="bold" title="Bold (Ctrl+B)" aria-label="Bold">B</button>
+          <button class="tool" data-command="italic" title="Italic (Ctrl+I)" aria-label="Italic"><em>I</em></button>
+          <button class="tool" data-command="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+          <div class="divider"></div>
+          <button class="tool" id="paragraphsBtn" title="Add breathing room between paragraphs" aria-label="Space paragraphs">¶</button>
+          <button class="tool" id="cleanupBtn" title="Clean extra spaces and line breaks" aria-label="Clean formatting">⌁</button>
+          <button class="tool" id="undoBtn" title="Undo" aria-label="Undo">↶</button>
+          <button class="tool" id="redoBtn" title="Redo" aria-label="Redo">↷</button>
+        </div>
+
+        <div class="editor-wrap">
+          <div id="editor" contenteditable="true" spellcheck="true" data-placeholder="Paste or write your post here..."></div>
+        </div>
+
+        <div class="statusbar">
+          <span id="modeStatus">LinkedIn-safe Unicode formatting</span>
+          <span><span id="charCount">0</span> characters, <span id="wordCount">0</span> words</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel side-card">
+          <h2>Quick emoji</h2>
+          <div class="emoji-grid" id="emojiGrid">
+            <button class="emoji" type="button" title="Point right">👉</button>
+            <button class="emoji" type="button" title="Point down">👇</button>
+            <button class="emoji" type="button" title="Sparkles">✨</button>
+            <button class="emoji" type="button" title="Star">⭐</button>
+            <button class="emoji" type="button" title="Rocket">🚀</button>
+            <button class="emoji" type="button" title="Light bulb">💡</button>
+            <button class="emoji" type="button" title="Check">✅</button>
+            <button class="emoji" type="button" title="Warning">⚠️</button>
+            <button class="emoji" type="button" title="Target">🎯</button>
+            <button class="emoji" type="button" title="Speech">💬</button>
+            <button class="emoji" type="button" title="Calendar">📅</button>
+            <button class="emoji" type="button" title="Lock">🔒</button>
+            <button class="emoji" type="button" title="Chart">📈</button>
+            <button class="emoji" type="button" title="People">👥</button>
+            <button class="emoji" type="button" title="Question">❓</button>
+          </div>
+        </section>
+
+        <section class="panel side-card">
+          <h2>Ready to publish</h2>
+          <div class="actions">
+            <button class="primary" id="copyBtn" type="button">Copy for LinkedIn</button>
+            <button class="secondary" id="plainBtn" type="button">Copy plain text</button>
+            <button class="ghost" id="clearBtn" type="button">Clear editor</button>
+          </div>
+          <p class="hint platform-note" id="platformNote">
+            LinkedIn does not provide normal rich-text post formatting. Bold and italic are created with Unicode characters.
+          </p>
+        </section>
+      </aside>
+    </main>
+
+    <footer>Runs entirely in your browser. Nothing leaves your device.</footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const root = document.documentElement;
+    const editor = document.getElementById('editor');
+    const linkedinTab = document.getElementById('linkedinTab');
+    const vivaTab = document.getElementById('vivaTab');
+    const copyBtn = document.getElementById('copyBtn');
+    const plainBtn = document.getElementById('plainBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const paragraphsBtn = document.getElementById('paragraphsBtn');
+    const cleanupBtn = document.getElementById('cleanupBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
+    const platformNote = document.getElementById('platformNote');
+    const modeStatus = document.getElementById('modeStatus');
+    const charCount = document.getElementById('charCount');
+    const wordCount = document.getElementById('wordCount');
+    const toast = document.getElementById('toast');
+    const lightThemeBtn = document.getElementById('lightThemeBtn');
+    const darkThemeBtn = document.getElementById('darkThemeBtn');
+
+    let platform = 'linkedin';
+
+    const unicodeStyles = {
+      bold: {
+        upper: [...'𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭'],
+        lower: [...'𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇'],
+        digits: [...'𝟬𝟭𝟮𝟯𝟰𝟱𝟲𝟳𝟴𝟵']
+      },
+      italic: {
+        upper: [...'𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡'],
+        lower: [...'𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻'],
+        digits: [...'0123456789']
+      }
+    };
+
+    function unicodeTransform(text, kind) {
+      const style = unicodeStyles[kind];
+      return [...text].map(character => {
+        let index = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(character);
+        if (index >= 0) return style.upper[index];
+
+        index = 'abcdefghijklmnopqrstuvwxyz'.indexOf(character);
+        if (index >= 0) return style.lower[index];
+
+        index = '0123456789'.indexOf(character);
+        if (index >= 0) return style.digits[index];
+
+        return character;
+      }).join('');
+    }
+
+    function underlineTransform(text) {
+      return [...text]
+        .map(character => /\s/.test(character) ? character : `${character}\u0332`)
+        .join('');
+    }
+
+    function selectedEditorRange() {
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount || selection.isCollapsed) return null;
+
+      const range = selection.getRangeAt(0);
+      const commonAncestor = range.commonAncestorContainer;
+      const insideEditor = commonAncestor === editor || editor.contains(commonAncestor);
+      return insideEditor ? range : null;
+    }
+
+    function replaceSelection(transformer) {
+      const range = selectedEditorRange();
+      if (!range) {
+        showToast('Select some text first');
+        editor.focus();
+        return;
+      }
+
+      const selection = window.getSelection();
+      const transformedText = transformer(range.toString());
+      const node = document.createTextNode(transformedText);
+
+      range.deleteContents();
+      range.insertNode(node);
+      range.setStartAfter(node);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      updateCounts();
+      editor.focus();
+    }
+
+    function format(command) {
+      editor.focus();
+
+      if (platform === 'linkedin') {
+        if (command === 'bold') replaceSelection(text => unicodeTransform(text, 'bold'));
+        if (command === 'italic') replaceSelection(text => unicodeTransform(text, 'italic'));
+        if (command === 'underline') replaceSelection(underlineTransform);
+        return;
+      }
+
+      document.execCommand(command, false, null);
+      updateCounts();
+    }
+
+    function setPlatform(nextPlatform) {
+      platform = nextPlatform;
+      const isLinkedIn = platform === 'linkedin';
+
+      linkedinTab.setAttribute('aria-selected', String(isLinkedIn));
+      vivaTab.setAttribute('aria-selected', String(!isLinkedIn));
+      copyBtn.textContent = isLinkedIn ? 'Copy for LinkedIn' : 'Copy for Viva Engage';
+      modeStatus.textContent = isLinkedIn
+        ? 'LinkedIn-safe Unicode formatting'
+        : 'Rich-text clipboard formatting';
+      platformNote.textContent = isLinkedIn
+        ? 'LinkedIn does not provide normal rich-text post formatting. Bold and italic are created with Unicode characters.'
+        : 'Viva Engage supports formatted text. Copy keeps bold, italic, underline, paragraphs, and a plain-text fallback.';
+
+      editor.focus();
+    }
+
+    function setTheme(nextTheme) {
+      root.setAttribute('data-theme', nextTheme);
+      lightThemeBtn.setAttribute('aria-pressed', String(nextTheme === 'light'));
+      darkThemeBtn.setAttribute('aria-pressed', String(nextTheme === 'dark'));
+    }
+
+    function insertAtCursor(text) {
+      editor.focus();
+      const selection = window.getSelection();
+      let range;
+
+      if (selection && selection.rangeCount && editor.contains(selection.anchorNode)) {
+        range = selection.getRangeAt(0);
+        range.deleteContents();
+      } else {
+        range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+      }
+
+      const node = document.createTextNode(text);
+      range.insertNode(node);
+      range.setStartAfter(node);
+      range.collapse(true);
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+      updateCounts();
+    }
+
+    function normalizeText(text) {
+      return text
+        .replace(/\u00A0/g, ' ')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n[ \t]+/g, '\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    function replaceEditorText(text) {
+      editor.textContent = text;
+      updateCounts();
+      editor.focus();
+    }
+
+    function cleanEditor() {
+      replaceEditorText(normalizeText(editor.innerText));
+      showToast('Spacing cleaned');
+    }
+
+    function spaceParagraphs() {
+      const spacedText = normalizeText(editor.innerText)
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .join('\n\n');
+
+      replaceEditorText(spacedText);
+      showToast('Paragraph spacing added');
+    }
+
+    function updateCounts() {
+      const text = editor.innerText || '';
+      charCount.textContent = String([...text].length);
+      wordCount.textContent = String(text.trim() ? text.trim().split(/\s+/).length : 0);
+    }
+
+    function selectEditorContents() {
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    async function copyPlainText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      selectEditorContents();
+      const copied = document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+      if (!copied) throw new Error('Copy command was rejected');
+    }
+
+    async function copyRichText(plainText, htmlText) {
+      if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
+        const item = new ClipboardItem({
+          'text/plain': new Blob([plainText], { type: 'text/plain' }),
+          'text/html': new Blob([htmlText], { type: 'text/html' })
+        });
+        await navigator.clipboard.write([item]);
+        return;
+      }
+
+      selectEditorContents();
+      const copied = document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+      if (!copied) throw new Error('Copy command was rejected');
+    }
+
+    // LinkedIn's post editor drops empty lines on paste. An invisible
+    // Braille blank (U+2800) is not treated as whitespace, so a "blank"
+    // line holding it survives, and the HTML flavour uses <p><br></p>,
+    // which LinkedIn keeps as an empty paragraph.
+    const LINKEDIN_BLANK = '⠀';
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function buildLinkedInClipboard(text) {
+      const lines = text.replace(/\r\n?/g, '\n').split('\n');
+      const plain = lines
+        .map(line => line.trim() === '' ? LINKEDIN_BLANK : line)
+        .join('\n');
+      const html = lines
+        .map(line => line.trim() === '' ? '<p><br></p>' : `<p>${escapeHtml(line)}</p>`)
+        .join('');
+      return { plain, html };
+    }
+
+    function copyViaTextarea(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const copied = document.execCommand('copy');
+      area.remove();
+      if (!copied) throw new Error('Copy command was rejected');
+    }
+
+    async function copyForLinkedIn(text) {
+      // Plain text only: LinkedIn's HTML paste handler merges paragraphs and
+      // drops non-ASCII characters (emoji, curly apostrophes).
+      const { plain } = buildLinkedInClipboard(text);
+
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(plain);
+        return;
+      }
+
+      copyViaTextarea(plain);
+    }
+
+    async function copyOutput(forcePlain = false) {
+      const plainText = editor.innerText.replace(/\n{3,}/g, '\n\n').trim();
+      if (!plainText) {
+        showToast('Add some text first');
+        return;
+      }
+
+      try {
+        if (!forcePlain && platform === 'linkedin') {
+          await copyForLinkedIn(plainText);
+        } else if (forcePlain) {
+          await copyPlainText(plainText);
+        } else {
+          await copyRichText(plainText, editor.innerHTML);
+        }
+        showToast(forcePlain ? 'Plain text copied' : 'Post copied');
+      } catch (error) {
+        console.error(error);
+        showToast('Copy failed. Select the text and press Ctrl+C');
+      }
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 1700);
+    }
+
+    document.querySelectorAll('[data-command]').forEach(button => {
+      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('click', () => format(button.dataset.command));
+    });
+
+    document.getElementById('emojiGrid').addEventListener('click', event => {
+      const button = event.target.closest('.emoji');
+      if (button) insertAtCursor(`${button.textContent} `);
+    });
+
+    linkedinTab.addEventListener('click', () => setPlatform('linkedin'));
+    vivaTab.addEventListener('click', () => setPlatform('viva'));
+    lightThemeBtn.addEventListener('click', () => setTheme('light'));
+    darkThemeBtn.addEventListener('click', () => setTheme('dark'));
+    copyBtn.addEventListener('click', () => copyOutput(false));
+    plainBtn.addEventListener('click', () => copyOutput(true));
+
+    clearBtn.addEventListener('click', () => {
+      if (!editor.innerText.trim() || window.confirm('Clear the editor?')) {
+        editor.replaceChildren();
+        updateCounts();
+        editor.focus();
+      }
+    });
+
+    cleanupBtn.addEventListener('click', cleanEditor);
+    paragraphsBtn.addEventListener('click', spaceParagraphs);
+    undoBtn.addEventListener('click', () => document.execCommand('undo'));
+    redoBtn.addEventListener('click', () => document.execCommand('redo'));
+    editor.addEventListener('input', updateCounts);
+
+    editor.addEventListener('keydown', event => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+
+      const command = {
+        b: 'bold',
+        i: 'italic',
+        u: 'underline'
+      }[event.key.toLowerCase()];
+
+      if (command) {
+        event.preventDefault();
+        format(command);
+      }
+    });
+
+    editor.addEventListener('paste', event => {
+      if (platform === 'linkedin') {
+        event.preventDefault();
+        const text = event.clipboardData.getData('text/plain');
+        document.execCommand('insertText', false, text);
+      }
+      window.setTimeout(updateCounts, 0);
+    });
+
+    setPlatform('linkedin');
+    setTheme('light');
+    updateCounts();
+
+  </script>
+</body>
+</html>
